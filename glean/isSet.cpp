@@ -1,5 +1,4 @@
-/**
- * isSet.cpp
+/** isSet.cpp
  * Since this file is not created by us,
  * it is not published under the Unlicense.
 */
