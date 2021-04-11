@@ -13,9 +13,10 @@ int main(void)
 	char d[] = "fa+b&b+a";
 	char e[] = "a+b&b+af";
 	char f[] = "&";
+	bool (*func)(const char) = strPalEt;
 
 	printf("\"a+b&b+a\":	");
-	printf((strPalEt(a)?"true":"false"));
+	printf((func(a)?"true":"false"));
 	putchar('\n');
 	printf("\"1+3&3-1\":	");
 	printf((strPalEt(b)?"true":"false"));
