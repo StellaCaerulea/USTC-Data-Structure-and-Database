@@ -1,3 +1,4 @@
+/* listLinked.h */
 #ifndef _LIST_LINKED_H_
 #define _LIST_LINKED_H_
 
@@ -12,7 +13,7 @@ typedef struct Node
 } node;
 
 node *nodeAlloc(void);
-void nodeFree(node *p);
+void nodeFreeChain(node *p);
 
 typedef struct ListLinked
 {
@@ -24,6 +25,7 @@ typedef struct ListLinked
 listLinked *listInit(void);
 void listFree(listLinked *l);
 
+/* Create a node which's next is NULL */
 node *nodeAlloc(void)
 {
 	node *l = (node *)malloc(sizeof(node));
@@ -31,15 +33,21 @@ node *nodeAlloc(void)
 	return l;
 }
 
-void nodeFree(node *p)
+/* Free p and all nodes after it.
+ * For freeing itself, simply use free() instead. */
+void nodeFreeChain(node *p)
 {
-	if (p->next == NULL)
+	if (p == NULL)
+	{
+		return;
+	}
+	else if (p->next == NULL)
 	{
 		free(p);
 	}
 	else
 	{
-		nodeFree(p->next);
+		nodeFreeChain(p->next);
 	}
 	return;
 }
@@ -64,9 +72,9 @@ void listFree(listLinked *l)
 	}
 	else
 	{
-		nodeFree(l->head);
+		nodeFreeChain(l->head);
 	}
 	return;
 }
 
-#endif
+#endif /* _LIST_LINKED_H_ */
