@@ -10,50 +10,52 @@ typedef struct polynomial
 #include <math.h>
 #include "../../library/listLinked.h"
 
-#ifndef _DEST_SIZE_
-	/* The scale of the polynomial-pointer array */
-	#define _DEST_SIZE_ 0xff
-#endif
-#ifndef _TEMP_SIZE_
-	#define _TEMP_SIZE_ 0xf
-#endif
+/* The scale of the polynomial-pointer array */
+#define _DEST_SIZE_ 0xff
+/* The scale of the temprature integer array */
+#define _TEMP_SIZE_ 0xf
 
 /**
  * Predefined print strings
  */
-#ifndef INTEGERS_ONLY
-	#define INTEGERS_ONLY "Menu accepts integers only.\n"
-#endif
-#ifndef NO_FUNCTION
-	#define NO_FUNCTION "Function not defined.\n"
-#endif
+#define NO_FUNC "Function not defined.\n"
+#define INTONLY "Menu accepts integers only.\n"
+#define EXPN_IN "exponent = "
+#define COEF_IN "coefficient = "
+#define DEST_IN "Input a polynomial numero: "
+#define INVALIN "Invalid input.\n"
 
+/* Create a polynomial. */
 listLinked *polynCreate(const int m);
 /**
  * Return the location where p has been changed. 
  * Negative value suggests a deleted node.
  */
 int polynInsert(listLinked *p, node *n);
+/* Print the polynomial on stdout. */
 void polynPrint(const listLinked *p);
-/* Returning (summand += k * addend) */
+/* Returning (summand += k * addend). */
 listLinked *polynAdd(listLinked *summand, const listLinked *addend, const double k);
 double polynValue(const listLinked *f, const double x);
 int polynTermDel(listLinked *p, const int expn);
-
-int main_t(void)
-{
-	listLinked *p = polynCreate(3);
-	polynPrint(p);
-	return 0;
-}
+listLinked *polynDiff(listLinked *primitive);
+listLinked *polynInt(listLinked *intergrand);
+listLinked *polynMult(const listLinked *f, const listLinked *g);
+/**
+ * Return the quotient directly and remainder in *rem;
+ * *divd as dividend, *divs as devisor.
+ */
+listLinked *polynDiv(const listLinked *divd, const listLinked *divs, listLinked rem);
+listLinked *polynPow(const listLinked *f, const int y);
+listLinked *polynMCF(const listLinked *f, const listLinked *g);
+listLinked *polynMCM(const listLinked *f, const listLinked *g);
 
 int main(void)
 {
 	int key = -1;
 	int temp[_TEMP_SIZE_] = {0};
-	bool isReturn = false;
+	// bool isReturn = false;
 	node *p = NULL;
-
 	listLinked *dest[_DEST_SIZE_] = {NULL};
 
 	while (true)
@@ -66,15 +68,15 @@ int main(void)
 		printf(" 4. Value\n");
 		printf(" 5. Free\n");
 		printf(" 6. Edit\n");
-		printf("----------------------\n");
-		// printf(" 7. Differential\n");
-		// printf(" 8. Intergral\n");
-		// printf(" 9. Multiply\n");
+		// printf("----------------------\n");
+		printf(" 7. Differential\n");
+		printf(" 8. Intergral\n");
+		printf(" 9. Multiply\n");
 		// printf("10. Divide\n");
 		// printf("11. Power\n");
 		// printf("12. Max common factor\n");
 		// printf("13. Min common multiple\n");
-		// printf("----------------------\n");
+		printf("----------------------\n");
 		if (scanf("%d", &key))
 		{
 			switch (key)
@@ -95,7 +97,7 @@ int main(void)
 				dest[temp[0]] = polynCreate(temp[1]);
 				break;
 			case 2: // Print
-				printf("Input the numero of the polynomial to print: ");
+				printf(DEST_IN);
 				temp[0] = scanf("%d", &temp[1]);
 				if (dest[temp[1]] == NULL)
 				{
@@ -103,7 +105,7 @@ int main(void)
 				}
 				else if (temp[1] >= _DEST_SIZE_ || dest[temp[1]] == NULL)
 				{
-					printf("Not a valid address.\n");
+					printf(INVALIN);
 				}
 				else
 				{
@@ -120,9 +122,9 @@ int main(void)
 						break;
 					}
 				}
-				printf("Input the numero of an addend polynomial: ");
+				printf(DEST_IN);
 				scanf("%d", &temp[1]);
-				printf("Input the numero of another addend polynomial: ");
+				printf(DEST_IN);
 				scanf("%d", &temp[2]);
 				polynAdd(dest[temp[0]], dest[temp[1]], 1);
 				polynAdd(dest[temp[0]], dest[temp[2]], 1);
@@ -130,33 +132,40 @@ int main(void)
 				polynPrint(dest[temp[0]]);
 				break;
 			case 4: // Value
-				printf("Input the numero of a polynomial: ");
-				scanf("%d", &temp[0]);
-				printf("x = ");
-				scanf("%d", &temp[1]);
-				printf("f == %+.2e\n", polynValue(dest[temp[0]], temp[1]));
-				break;
-			case 5: // Free
-				printf("Input the numero of a polynomial: ");
+				printf(DEST_IN);
 				scanf("%d", &temp[0]);
 				if (dest[temp[0]] == NULL)
 				{
-					printf("Not exist.\n");
+					printf(INVALIN);
 				}
 				else
+				{
+					printf("x = ");
+					scanf("%d", &temp[1]);
+					printf("f(%d) == %+.2e\n", temp[1], polynValue(dest[temp[0]], temp[1]));
+				}
+				break;
+			case 5: // Free
+				printf(DEST_IN);
+				scanf("%d", &temp[0]);
+				if (dest[temp[0]] == NULL)
+				{
+					printf(INVALIN);
+				}
+				else // select existing polynomial
 				{
 					listFree(dest[temp[0]]);
 					dest[temp[0]] = NULL;
 				}
 				break;
 			case 6: // Edit
-				printf("Input the numero of a polynomial: ");
+				printf(DEST_IN);
 				scanf("%d", &temp[0]);
 				if (dest[temp[0]] == NULL)
 				{
-					printf("Not exist.\n");
+					printf(INVALIN);
 				}
-				else
+				else // input valid int
 				{
 					printf("----------------------\n");
 					printf(" 1. Add term\n");
@@ -168,29 +177,29 @@ int main(void)
 					{
 					case 1:
 						p = nodeAlloc();
-						printf("Input exponent: ");
+						printf(EXPN_IN);
 						scanf("%d", &p->data.expn);
-						printf("Input coefficient: ");
+						printf(COEF_IN);
 						scanf("%lf", &p->data.coef);
 						polynInsert(dest[temp[0]], p);
 						break;
 					case 2:
-						printf("Input expn: ");
+						printf(EXPN_IN);
 						scanf("%d", &temp[2]);
 						polynTermDel(dest[temp[0]], temp[2]);
 						break;
 					case 3:
 						p = nodeAlloc();
-						printf("Input exponent: ");
+						printf(EXPN_IN);
 						scanf("%d", &p->data.expn);
-						printf("Input coefficient: ");
+						printf(COEF_IN);
 						scanf("%lf", &p->data.coef);
 						polynTermDel(dest[temp[0]], p->data.expn);
 						polynInsert(dest[temp[0]], p);
 					default:
 						break;
-					}
-				}
+					} // switch
+				}	  // else
 				break;
 			case 7: // Diffrential
 				break;
@@ -202,28 +211,28 @@ int main(void)
 				break;
 			case 11: // Power
 				break;
-			case 12: // MCF
+			case 12: // Max common factor
 				break;
-			case 13: // MCM
+			case 13: // Min common multiple
 				break;
 			default: // Undefined
-				printf(NO_FUNCTION);
+				printf(NO_FUNC);
 				break;
 			} // switch
-		} // if input integer
+		}	  // if input integer
 		else
 		{
-			printf(INTEGERS_ONLY);
+			printf(INTONLY);
 			fflush(stdin);
 		} // else
-	} // while true
+	}	  // while true
 }
 
 listLinked *polynCreate(const int m)
 {
 	if (m <= 0)
 	{
-		printf("What ru doin'?\n");
+		printf(INVALIN);
 		return NULL;
 	}
 	listLinked *l = listInit();
@@ -231,9 +240,9 @@ listLinked *polynCreate(const int m)
 	for (int i = 0; i < m; i++)
 	{
 		p = nodeAlloc();
-		printf("Input exponent: ");
+		printf(EXPN_IN);
 		scanf("%d", &p->data.expn);
-		printf("Input coefficient: ");
+		printf(COEF_IN);
 		scanf("%lf", &p->data.coef);
 		printf("%+.2e x^%d\n", p->data.coef, p->data.expn);
 		if (fabs(p->data.coef) >= __DBL_EPSILON__)
@@ -258,14 +267,14 @@ int polynInsert(listLinked *p, node *n)
 		p->len++;
 		return 0;
 	}
-	else if (crusor->data.expn > n->data.expn)
+	else if (crusor->data.expn < n->data.expn)
 	{
 		n->next = p->head;
 		p->head = n;
 		p->len++;
 		return 0;
 	}
-	else if (crusor->data.expn == n->data.expn) // 
+	else if (crusor->data.expn == n->data.expn)
 	{
 		crusor->data.coef += n->data.coef;
 		free(n);
@@ -285,7 +294,7 @@ int polynInsert(listLinked *p, node *n)
 	{
 		while (crusor->next != NULL)
 		{
-			if (crusor->next->data.expn > n->data.expn)
+			if (crusor->next->data.expn < n->data.expn)
 			{
 				n->next = crusor->next;
 				crusor->next = n;
@@ -331,10 +340,10 @@ listLinked *polynAdd(listLinked *summand, const listLinked *addend, const double
 	node *temp = NULL;
 	if (summand == addend)
 	{
-		if (k == -1.0)
+		if (fabs(k + 1.0) < __DBL_EPSILON__)
 		{
 			listFree(summand);
-			return NULL;
+			summand = NULL;
 		}
 		else
 		{
@@ -342,7 +351,6 @@ listLinked *polynAdd(listLinked *summand, const listLinked *addend, const double
 			{
 				crusor->data.coef += k * crusor->data.coef;
 			}
-			return summand;
 		}
 	}
 	else
@@ -354,27 +362,34 @@ listLinked *polynAdd(listLinked *summand, const listLinked *addend, const double
 			temp->data.expn = crusor->data.expn;
 			polynInsert(summand, temp);
 		}
-		return summand;
 	}
+	return summand;
 }
 
 double polynValue(const listLinked *f, const double x)
 {
-	double ret_val = 0;
+	double ret_val = 0.0;
 	const node *crusor;
-	for (crusor = f->head; crusor != NULL; crusor = crusor->next)
+	if (f == NULL)
 	{
-		ret_val += crusor->data.coef * pow(x, crusor->data.expn);
+		ret_val = nan("");
+	}
+	else
+	{
+		for (crusor = f->head; crusor != NULL; crusor = crusor->next)
+		{
+			ret_val += crusor->data.coef * pow(x, crusor->data.expn);
+		}
 	}
 	return ret_val;
 }
 
 int polynTermDel(listLinked *p, const int expn)
 {
-	if (p == NULL)
-	{
-		return 0;
-	}
+	// if (p == NULL)
+	// {
+	// 	return 0;
+	// }
 	node *q = p->head;
 	node *r = NULL;
 	int counter = 1;
@@ -401,3 +416,64 @@ int polynTermDel(listLinked *p, const int expn)
 		return counter;
 	}
 }
+
+listLinked *polynDiff(listLinked *primitive)
+{
+	if (primitive == NULL)
+	{
+		return NULL;
+	}
+	listLinked *ret = listInit();
+	for (node *p = primitive->head; p != NULL; p = p->next)
+	{
+		if (p->data.expn > 0)
+		{
+			node *q = nodeAlloc();
+			q->data.coef = p->data.coef * p->data.expn;
+			q->data.expn = p->data.expn - 1;
+			polynInsert(ret, q);
+		}
+	}
+	return ret;
+}
+
+listLinked *polynInt(listLinked *intergrand)
+{
+	if (intergrand == NULL)
+	{
+		return NULL;
+	}
+	listLinked *ret = listInit();
+	for (node *p = intergrand->head; p != NULL; p = p->next)
+	{
+		node *q = nodeAlloc();
+		q->data.coef = p->data.coef / p->data.expn;
+		q->data.expn = p->data.expn + 1;
+		polynInsert(ret, q);
+	}
+	return ret;
+}
+
+listLinked *polynMult(const listLinked *f, const listLinked *g)
+{
+	if (f == NULL || g == NULL)
+	{
+		return NULL;
+	}
+	listLinked *ret = listInit();
+	for (node *p = f->head; p != NULL; p = p->next)
+	{
+		for (node *q = g->head; q != NULL; q = q->next)
+		{
+			node *r = nodeAlloc();
+			r->data.coef = p->data.coef * q->data.coef;
+			r->data.expn = p->data.expn + q->data.expn;
+			polynInsert(ret, r);
+		}
+	}
+}
+
+listLinked *polynDiv(const listLinked *divd, const listLinked *divs, listLinked rem);
+listLinked *polynPow(const listLinked *f, const int y);
+listLinked *polynMCF(const listLinked *f, const listLinked *g);
+listLinked *polynMCM(const listLinked *f, const listLinked *g);

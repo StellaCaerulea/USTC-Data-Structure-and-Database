@@ -29,7 +29,10 @@ void listFree(listLinked *l);
 node *nodeAlloc(void)
 {
 	node *l = (node *)malloc(sizeof(node));
-	l->next = NULL;
+	if (l != NULL)
+	{
+		l->next = NULL;
+	}
 	return l;
 }
 
