@@ -9,9 +9,12 @@ typedef char typeElem;
 
 #include "../../library/stackLinked.h"
 
-// #define bracket(x)	x == 0 ?	'{' :	x == 1 ?	'}' : \
-// 						x == 2 ?	'[' :	x == 3 ?	']' : \
-// 						x == 4 ?	'(' :	x == 5 ?	')' : '\0'
+// #define bracket(x)	\
+// 	x == 0 ?	'{' :	x == 1 ?	'}' : 		\
+// 	x == 2 ?	'[' :	x == 3 ?	']' : 		\
+// 	x == 4 ?	'(' :	x == 5 ?	')' : '\0'
+
+#define legality(str) printf(bracketLegalityStrict(str) ? "true\n" : "false\n")
 
 const char bracket[] = {'{', '[', '(', ')', ']', '}'};
 
@@ -19,30 +22,21 @@ bool bracketLegalityStrict(char *str);
 
 int main(void)
 {
-	// char a[] = "3*{2+[2*5/(2+9)]}";
-	// char b[] = "3*(2+6/[2*9])";
-
-	// printf(bracketLegalityStrict(a)?"true":"false");
-	// putchar('\n');
-	// printf(bracketLegalityStrict(b)?"true":"false");
-	// putchar('\n');
-
+	char a[] = "3*{2+[2*5/(2+9)]}";
+	char b[] = "3*(2+6/[2*9])";
 	char c[] = "()[()]";
 	char d[] = "()([])";
 	char e[] = "()[]";
 	char f[] = "()[(]";
 	char g[] = "()[()";
 
-	printf(bracketLegalityStrict(c)?"true":"false");
-	putchar('\n');
-	printf(bracketLegalityStrict(d)?"true":"false");
-	putchar('\n');
-	printf(bracketLegalityStrict(e)?"true":"false");
-	putchar('\n');
-	printf(bracketLegalityStrict(f)?"true":"false");
-	putchar('\n');
-	printf(bracketLegalityStrict(g)?"true":"false");
-	putchar('\n');
+	legality(a); // true
+	legality(b); // false
+	legality(c); // true
+	legality(d); // false
+	legality(e); // true
+	legality(f); // false
+	legality(g); // false
 
 	return 0;
 }

@@ -5,9 +5,9 @@ typedef struct polynomial
 
 } term, typeElem;
 
-#include <stdbool.h>
 #include <stdio.h>
-#include <math.h>
+#include "../../library/abbr.h"
+#include "../../library/errno.h"
 #include "../../library/listLinked.h"
 
 /* The scale of the polynomial-pointer array */
@@ -37,7 +37,7 @@ void polynPrint(const listLinked *p);
 /* Returning (summand += k * addend). */
 listLinked *polynAdd(listLinked *summand, const listLinked *addend, const double k);
 double polynValue(const listLinked *f, const double x);
-int polynTermDel(listLinked *p, const int expn);
+errno_t polynTermDel(listLinked *p, const int expn);
 listLinked *polynDiff(listLinked *primitive);
 listLinked *polynInt(listLinked *intergrand);
 listLinked *polynMult(const listLinked *f, const listLinked *g);
@@ -45,7 +45,7 @@ listLinked *polynMult(const listLinked *f, const listLinked *g);
  * Return the quotient directly and remainder in *rem;
  * *divd as dividend, *divs as devisor.
  */
-listLinked *polynDiv(const listLinked *divd, const listLinked *divs, listLinked rem);
+listLinked *polynDiv(const listLinked *divd, const listLinked *divs, listLinked *rem);
 listLinked *polynPow(const listLinked *f, const int y);
 listLinked *polynMCF(const listLinked *f, const listLinked *g);
 listLinked *polynMCM(const listLinked *f, const listLinked *g);
@@ -164,8 +164,8 @@ int main(void)
 				if (dest[temp[0]] == NULL)
 				{
 					printf(INVALIN);
-				}
-				else // input valid int
+				}  // if calling for NULL polynomial
+				else
 				{
 					printf("----------------------\n");
 					printf(" 1. Add term\n");
@@ -198,8 +198,8 @@ int main(void)
 						polynInsert(dest[temp[0]], p);
 					default:
 						break;
-					} // switch
-				}	  // else
+					} // switch in suboptions
+				} // else input valid int
 				break;
 			case 7: // Diffrential
 				break;
@@ -219,110 +219,156 @@ int main(void)
 				printf(NO_FUNC);
 				break;
 			} // switch
-		}	  // if input integer
+		} // if input integer
 		else
 		{
 			printf(INTONLY);
 			fflush(stdin);
-		} // else
-	}	  // while true
+		} // else not integer
+	} // while true
 }
 
 listLinked *polynCreate(const int m)
 {
-	if (m <= 0)
+	listLinked *l = NULL;
+	node *p = NULL;
+
+	if (unlikely(m <= 0))
 	{
 		printf(INVALIN);
 		return NULL;
 	}
-	listLinked *l = listInit();
-	node *p = NULL;
-	for (int i = 0; i < m; i++)
+	else
 	{
-		p = nodeAlloc();
-		printf(EXPN_IN);
-		scanf("%d", &p->data.expn);
-		printf(COEF_IN);
-		scanf("%lf", &p->data.coef);
-		printf("%+.2e x^%d\n", p->data.coef, p->data.expn);
-		if (fabs(p->data.coef) >= __DBL_EPSILON__)
+		l = listInit();
+
+		for (int i = 0; i < m; i++)
 		{
-			polynInsert(l, p);
+			p = nodeAlloc();
+
+			printf(EXPN_IN);
+			scanf("%d", &p->data.expn);
+			printf(COEF_IN);
+			scanf("%lf", &p->data.coef);
+
+			if (likely(p->data.coef != 0.0)) // safe since just initialized
+			{
+				printf("%+.2e x^%d\n", p->data.coef, p->data.expn);
+				polynInsert(l, p);
+			}
+			else
+			{
+				free(p);
+			}
 		}
-		else
-		{
-			free(p);
-		}
-	}
-	return l;
+		return l;
+
+	} // else
 }
 
 int polynInsert(listLinked *p, node *n)
 {
-	node *crusor = p->head;
-	int counter = 1;
-	if (crusor == NULL) // 0 to 1
+	/**
+	 * Warning: Grossing if-else statements and up-to-6-layer indentation.
+	 * Prepare a vernier caliper to read this function.
+	*/
+	node *crusor = NULL;
+	int counter = 0;
+
+	if (unlikely(p == NULL || n == NULL))
 	{
-		p->head = n;
-		p->len++;
-		return 0;
-	}
-	else if (crusor->data.expn < n->data.expn)
-	{
-		n->next = p->head;
-		p->head = n;
-		p->len++;
-		return 0;
-	}
-	else if (crusor->data.expn == n->data.expn)
-	{
-		crusor->data.coef += n->data.coef;
-		free(n);
-		if (fabs(crusor->data.coef) < __DBL_EPSILON__)
-		{
-			p->head = crusor->next;
-			free(crusor);
-			if (p->head == NULL)
-			{
-				free(p);
-			}
-			return -1;
-		}
-		return 0;
+		return INT_MIN;
 	}
 	else
 	{
-		while (crusor->next != NULL)
+		crusor = p->head;
+		counter = 1;
+
+		if (unlikely(crusor == NULL)) // 0 to 1
 		{
-			if (crusor->next->data.expn < n->data.expn)
+			p->head = n;
+			p->len++;
+
+			return 0;
+		}
+		else if (crusor->data.expn < n->data.expn)
+		{
+			n->next = p->head;
+			p->head = n;
+			p->len++;
+
+			return 0;
+		}
+		else if (crusor->data.expn == n->data.expn)
+		{
+			if (_equal(crusor->data.coef, -(n->data.coef)))
 			{
-				n->next = crusor->next;
-				crusor->next = n;
-				p->len++;
-				return counter;
-			}
-			else if (crusor->next->data.expn == n->data.expn)
-			{
-				crusor->next->data.coef += n->data.coef;
 				free(n);
-				if (fabs(crusor->next->data.coef) < __DBL_EPSILON__)
+				p->head = crusor->next;
+				free(crusor);
+
+				if (p->head == NULL)
 				{
-					n = crusor->next;
-					crusor->next = n->next;
-					free(n);
+					free(p);
 				}
-				return -counter;
+
+				return -1;
 			}
 			else
 			{
-				crusor = crusor->next;
-				counter++;
+				crusor->data.coef += n->data.coef;
+				free(n);
+
+				return 1;
 			}
 		}
-	}
-	crusor->next = n;
-	p->len++;
-	return counter;
+		else
+		{
+			while (crusor->next != NULL)
+			{
+				if (crusor->next->data.expn < n->data.expn)
+				{
+					n->next = crusor->next;
+					crusor->next = n;
+					p->len++;
+
+					return counter;
+				}
+				else if (crusor->next->data.expn == n->data.expn)
+				{
+					if (_equal(crusor->next->data.coef, n->data.coef))
+					{
+						free(n);
+						n = crusor->next;
+						crusor->next = n->next;
+						free(n);
+
+						return -counter;
+					}
+					else
+					{
+						crusor->next->data.coef += n->data.coef;
+						free(n);
+
+						return counter;
+					}
+				}
+				else
+				{
+					crusor = crusor->next;
+					counter++;
+				}
+
+			} // while (crusor->next != NULL)
+
+			crusor->next = n;
+			p->len++;
+
+			return counter;
+
+		} // else (crusor->data.expn != n->data.expn)
+
+	} // else (p != NULL && n != NULL)
 }
 
 void polynPrint(const listLinked *p)
@@ -338,9 +384,10 @@ void polynPrint(const listLinked *p)
 listLinked *polynAdd(listLinked *summand, const listLinked *addend, const double k)
 {
 	node *temp = NULL;
+
 	if (summand == addend)
 	{
-		if (fabs(k + 1.0) < __DBL_EPSILON__)
+		if (_equal(k, -1.0))
 		{
 			listFree(summand);
 			summand = NULL;
@@ -363,14 +410,16 @@ listLinked *polynAdd(listLinked *summand, const listLinked *addend, const double
 			polynInsert(summand, temp);
 		}
 	}
+
 	return summand;
 }
 
 double polynValue(const listLinked *f, const double x)
 {
 	double ret_val = 0.0;
-	const node *crusor;
-	if (f == NULL)
+	const node *crusor = NULL;
+
+	if (unlikely(f == NULL))
 	{
 		ret_val = nan("");
 	}
@@ -381,28 +430,29 @@ double polynValue(const listLinked *f, const double x)
 			ret_val += crusor->data.coef * pow(x, crusor->data.expn);
 		}
 	}
+
 	return ret_val;
 }
 
-int polynTermDel(listLinked *p, const int expn)
+errno_t polynTermDel(listLinked *p, const int expn)
 {
-	// if (p == NULL)
-	// {
-	// 	return 0;
-	// }
 	node *q = p->head;
 	node *r = NULL;
-	int counter = 1;
-	if (q->data.expn == expn)
+
+	if (unlikely(p == NULL))
+	{
+		return -EPERM;
+	}
+	else if (q->data.expn == expn)
 	{
 		p->head = q->next;
 		free(q);
+
 		return 0;
 	}
 	while (q->next != NULL && q->next->data.expn != expn)
 	{
 		q = q->next;
-		++counter;
 	}
 	if (q->next == NULL)
 	{
@@ -413,67 +463,98 @@ int polynTermDel(listLinked *p, const int expn)
 		r = q->next;
 		q->next = r->next;
 		free(r);
-		return counter;
+
+		return 0;
 	}
 }
 
 listLinked *polynDiff(listLinked *primitive)
 {
-	if (primitive == NULL)
+	listLinked *ret_val = listInit();
+	node *q = NULL;
+
+	if (unlikely(primitive == NULL || ret_val == NULL))
 	{
 		return NULL;
 	}
-	listLinked *ret = listInit();
 	for (node *p = primitive->head; p != NULL; p = p->next)
 	{
 		if (p->data.expn > 0)
 		{
-			node *q = nodeAlloc();
-			q->data.coef = p->data.coef * p->data.expn;
+			q = nodeAlloc();
+			q->data.coef = p->data.coef * (float)(p->data.expn);
 			q->data.expn = p->data.expn - 1;
-			polynInsert(ret, q);
+			polynInsert(ret_val, q);
 		}
 	}
-	return ret;
+
+	return ret_val;
 }
 
 listLinked *polynInt(listLinked *intergrand)
 {
-	if (intergrand == NULL)
+	listLinked *ret_val = listInit();
+	node *q = NULL;
+
+	if (unlikely(intergrand == NULL || ret_val == NULL))
 	{
 		return NULL;
 	}
-	listLinked *ret = listInit();
-	for (node *p = intergrand->head; p != NULL; p = p->next)
+	else
 	{
-		node *q = nodeAlloc();
-		q->data.coef = p->data.coef / p->data.expn;
-		q->data.expn = p->data.expn + 1;
-		polynInsert(ret, q);
+		for (node *p = intergrand->head; p != NULL; p = p->next)
+		{
+			q = nodeAlloc();
+			q->data.coef = p->data.coef / (float)(p->data.expn);
+			q->data.expn = p->data.expn + 1;
+			polynInsert(ret_val, q);
+		}
+
+		return ret_val;
 	}
-	return ret;
 }
 
 listLinked *polynMult(const listLinked *f, const listLinked *g)
 {
-	if (f == NULL || g == NULL)
+	listLinked *ret_val = listInit();
+
+	if (unlikely(f == NULL || g == NULL || ret_val == NULL))
 	{
 		return NULL;
 	}
-	listLinked *ret = listInit();
-	for (node *p = f->head; p != NULL; p = p->next)
+	else
 	{
-		for (node *q = g->head; q != NULL; q = q->next)
+		for (node *p = f->head; p != NULL; p = p->next)
 		{
-			node *r = nodeAlloc();
-			r->data.coef = p->data.coef * q->data.coef;
-			r->data.expn = p->data.expn + q->data.expn;
-			polynInsert(ret, r);
+			for (node *q = g->head; q != NULL; q = q->next)
+			{
+				node *r = nodeAlloc();
+				r->data.coef = p->data.coef * q->data.coef;
+				r->data.expn = p->data.expn + q->data.expn;
+				polynInsert(ret_val, r);
+			}
 		}
+
+		return ret_val;
 	}
 }
 
-listLinked *polynDiv(const listLinked *divd, const listLinked *divs, listLinked rem);
-listLinked *polynPow(const listLinked *f, const int y);
-listLinked *polynMCF(const listLinked *f, const listLinked *g);
-listLinked *polynMCM(const listLinked *f, const listLinked *g);
+listLinked *polynDiv(const listLinked *divd, const listLinked *divs, listLinked *rem)
+{
+	return NULL;
+}
+
+listLinked *polynPow(const listLinked *f, const int y)
+{
+	return NULL;
+}
+
+listLinked *polynMCF(const listLinked *f, const listLinked *g)
+{
+	return NULL;
+}
+
+listLinked *polynMCM(const listLinked *f, const listLinked *g)
+{
+	return NULL;
+}
