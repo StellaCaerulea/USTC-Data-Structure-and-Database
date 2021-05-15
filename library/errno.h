@@ -160,4 +160,4 @@ typedef int errno_t;
 
 #define EHWPOISON       133 /* Memory page has hardware error */
 
-#endif
+#endif /* _INC_ERRNO */

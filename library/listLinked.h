@@ -5,9 +5,14 @@
 #include <stdlib.h>
 #include "errno.h"
 
+#ifndef TYPE_ELEM_LIST_LINKED_DEFINED
+	typedef int typeElemLinkedList;
+	#define TYPE_ELEM_LIST_LINKED_STD_ERR ((typeElem)(-1))
+#endif
+
 typedef struct Node
 {
-	typeElem data;
+	typeElemLinkedList data;
 	struct Node *next;
 
 } node;

@@ -3,9 +3,9 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#define TYPE_ELEM_DEFINED
-typedef char typeElem;
-#define TYPE_ELEM_STD_ERR ((typeElem)(-1))
+#define TYPE_ELEM_STACK_DEFINED
+typedef char typeElemStack;
+#define TYPE_ELEM_STACK_STD_ERR ((typeElemStack)(-1))
 
 #include "../../library/stackLinked.h"
 

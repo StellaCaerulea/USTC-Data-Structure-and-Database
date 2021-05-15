@@ -4,34 +4,30 @@
 #include <stdbool.h>
 #include <math.h>
 
-#ifndef choose_expr
-#define choose_expr __builtin_choose_expr
+#ifndef bool_str
+	#define bool_str(boolean) printf(boolean ? "true\n" : "false\n")
 #endif
 
-#ifndef types_compatible
-#define types_compatible __builtin_types_compatible_p
-#endif
-
-#ifndef likely
-#define likely(x) __builtin_expect((x),true)
-#endif
-
-#ifndef unlikely
-#define unlikely(x) __builtin_expect((x),false)
+#ifdef __GNUC__
+	#define likely(x)	__builtin_expect(!!(x), true)
+	#define unlikely(x)	__builtin_expect(!!(x), false)
+#else
+	#define likely(x)	(x)
+	#define unlikely(x)	(x)
 #endif
 
 #define _equal(x_1, x_2)									\
-choose_expr(											\
-	types_compatible(__typeof__(x_1), double) &&	\
-	types_compatible(__typeof__(x_2), double),				\
-		_dbl_equal(x_1, x_2),							\
-choose_expr(										\
-	types_compatible(__typeof__(x_1),  float) &&			\
-	types_compatible(__typeof__(x_2),  float),			\
-		_flt_equal(x_1, x_2),						\
-choose_expr(												\
-	types_compatible(__typeof__(x_1), long double) &&	\
-	types_compatible(__typeof__(x_2), long double),	\
+__builtin_choose_expr(												\
+	__builtin_types_compatible_p(__typeof__(x_1), double) &&	\
+	__builtin_types_compatible_p(__typeof__(x_2), double),	\
+		_dbl_equal(x_1, x_2),										\
+__builtin_choose_expr(											\
+	__builtin_types_compatible_p(__typeof__(x_1),  float) &&\
+	__builtin_types_compatible_p(__typeof__(x_2),  float),			\
+		_flt_equal(x_1, x_2),									\
+__builtin_choose_expr(										\
+	__builtin_types_compatible_p(__typeof__(x_1), long double) &&	\
+	__builtin_types_compatible_p(__typeof__(x_2), long double),	\
 		_ldbl_equal(x_1, x_2),								\
 (void)0)))
 

@@ -1,9 +1,13 @@
+#define TYPE_ELEM_LIST_LINKED_DEFINED
 typedef struct polynomial
 {
 	double coef;
 	int expn;
 
-} term, typeElem;
+} term, typeElemLinkedList;
+
+const term termErr = {0.0/0.0, -1}; 
+#define TYPE_ELEM_LIST_LINKED_STD_ERR termErr;
 
 #include <stdio.h>
 #include "../../library/abbr.h"
@@ -546,7 +550,26 @@ listLinked *polynDiv(const listLinked *divd, const listLinked *divs, listLinked 
 
 listLinked *polynPow(const listLinked *f, const int y)
 {
+	listLinked *_polynPowInn(listLinked *, const listLinked *, const int);
+
 	return NULL;
+}
+
+static listLinked *_polynPowInn(listLinked *o, const listLinked *f, const int y)
+{
+	listLinked *temp = NULL;
+
+	if (y == 0)
+	{
+		return o;
+	}
+	else
+	{
+		temp = polynMult(o, f);
+		listFree(o);
+
+		return _polynPowInn(temp, f, y - 1);
+	}
 }
 
 listLinked *polynMCF(const listLinked *f, const listLinked *g)

@@ -2,18 +2,22 @@
 #ifndef _STACK_LINKED_H_
 #define _STACK_LINKED_H_
 
-#ifndef TYPE_ELEM_DEFINED
-	typedef int typeElem;
-	#define TYPE_ELEM_STD_ERR ((typeElem)(-1))
+#ifndef TYPE_ELEM_STACK_DEFINED
+	typedef int typeElemStack;
+	#define TYPE_ELEM_STACK_STD_ERR ((typeElemStack)(-1))
 #endif
+
+#define TYPE_ELEM_LIST_LINKED_DEFINED
+typedef typeElemStack typeElemLinkedList;
+#define TYPE_ELEM_LIST_LINKED_STD_ERR TYPE_ELEM_STACK_STD_ERR
 
 #include "listLinked.h"
 
 typedef struct ListLinked stack;
 
-typeElem stackGetTop(stack *s);
-errno_t stackPush(stack *s, typeElem e);
-typeElem stackPop(stack *s);
+typeElemStack stackGetTop(stack *s);
+errno_t stackPush(stack *s, typeElemStack e);
+typeElemStack stackPop(stack *s);
 
 inline stack *stackInit(void)
 {
@@ -26,11 +30,11 @@ inline void stackFree(stack *l)
 	return;
 }
 
-inline typeElem stackGetTop(stack *s)
+inline typeElemStack stackGetTop(stack *s)
 {
 	if (s == NULL || s->head == NULL)
 	{
-		return TYPE_ELEM_STD_ERR;
+		return TYPE_ELEM_STACK_STD_ERR;
 	}
 	else
 	{
@@ -38,7 +42,7 @@ inline typeElem stackGetTop(stack *s)
 	}
 }
 
-errno_t stackPush(stack *s, typeElem e)
+errno_t stackPush(stack *s, typeElemStack e)
 {
 	if (s == NULL)
 	{
@@ -62,14 +66,14 @@ errno_t stackPush(stack *s, typeElem e)
 	}
 }
 
-typeElem stackPop(stack *s)
+typeElemStack stackPop(stack *s)
 {
-	typeElem ret_val;
+	typeElemStack ret_val;
 	node *n;
 
 	if (s == NULL)
 	{
-		return TYPE_ELEM_STD_ERR;
+		return TYPE_ELEM_STACK_STD_ERR;
 	}
 	else
 	{
@@ -81,4 +85,4 @@ typeElem stackPop(stack *s)
 	}
 }
 
-#endif
+#endif /* _STACK_LINKED_H_ */
